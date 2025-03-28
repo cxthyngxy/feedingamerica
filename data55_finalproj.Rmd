@@ -20,7 +20,7 @@ The data used in this dashboard comes from Feeding America’s Map the Meal Gap 
 
 This dashboard provides critical insights into food insecurity trends in the United States and Georgia at the county-level, helping policymakers, researchers, and community organizations better understand geographic disparities in food access. By visualizing trends over time and identifying high-need areas, stakeholders can make data-driven decisions to allocate resources effectively and implement targeted interventions.
 
-Link to Github repository: https://github.com/cxthyngxy/feeding_america20192022 
+Link to Github repository: https://github.com/cxthyngxy/feedingamerica 
 
 ```{r}
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
