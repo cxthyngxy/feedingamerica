@@ -1,0 +1,43 @@
+/* Enable scrolling */
+.main-container {
+    overflow-y: auto !important;
+    max-height: 90vh;
+}
+
+/* Adjust section height to allow scrolling */
+section.level2 {
+    overflow-y: auto;
+    max-height: 85vh;
+}
+
+/* Make graphs responsive */
+.plotly {
+    width: 100% !important;
+    height: auto !important;
+}
+
+/* Adjust padding and margins for mobile-friendly design */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 10px;
+}
+
+/* Enable scrolling for the main dashboard container */
+.main-container {
+    overflow-y: auto !important;
+    max-height: 90vh; /* Adjust if needed */
+}
+
+/* Ensure scrolling inside each dashboard section */
+section.level2 {
+    overflow-y: auto;
+    max-height: 85vh; /* Adjust if needed */
+}
+
+/* Enable scrolling for flexdashboard containers */
+.flexdashboard {
+    overflow-y: auto !important;
+    max-height: 90vh;
+}
+

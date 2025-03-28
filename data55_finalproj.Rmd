@@ -1,0 +1,186 @@
+---
+title: 'Feeding America: Data 555 Final Project'
+author: "Cathy Nguyen"
+date: "`r Sys.Date()`"
+output: 
+  flexdashboard::flex_dashboard:
+    theme: journal
+    orientation: columns
+    vertical_layout: scroll
+    storyboard: true 
+    css: styles.css
+---
+# Feeding America: Data 555 Final Project
+
+**Author:** Cathy Nguyen  
+**Date:** `r Sys.Date()`  
+
+## Overview
+The data used in this dashboard comes from Feeding America’s Map the Meal Gap dataset (available at https://www.feedingamerica.org/research/map-the-meal-gap/by-county/), which provides county-level food insecurity estimates across the United States. The dataset includes information on food insecurity rates, the number of food-insecure individuals, child food insecurity rates, and meal costs. Feeding America derives these estimates through statistical modeling based on data from the Current Population Survey (CPS), the American Community Survey (ACS), and food price data from NielsenIQ. The study population consists of individuals and households across all U.S. counties, with a focus on measuring food insecurity at both the general and child-specific levels. The data used in this dashboard represents estimates for the year 2022, with prior years available for trend analysis.
+
+This dashboard provides critical insights into food insecurity trends in the United States and Georgia at the county-level, helping policymakers, researchers, and community organizations better understand geographic disparities in food access. By visualizing trends over time and identifying high-need areas, stakeholders can make data-driven decisions to allocate resources effectively and implement targeted interventions.
+
+Link to Github repository: https://github.com/cxthyngxy/feeding_america20192022 
+
+```{r}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+```
+
+```{r setup, include=FALSE}
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+knitr::opts_chunk$set(echo = TRUE)
+install.packages("flexdashboard")
+library(flexdashboard)
+install.packages("bslib")
+library(bslib)
+```
+
+```{r, include=FALSE}
+# Set CRAN mirror explicitly to avoid errors in non-interactive mode
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+
+#install.packages("readxl") 
+#install.packages("openxlsx") # If not installed
+#library(readxl)
+library(openxlsx)
+fooddata_counties <- read.xlsx("FeedingAmerica_MMG2024_2019-2022_Data_ToShare_v3.xlsx", sheet = 2)  # By name
+fooddata_states <- read.xlsx("FeedingAmerica_MMG2024_2019-2022_Data_ToShare_v3.xlsx", sheet = 4)  # By index
+
+
+```
+
+---
+
+# Food Insecurity Trends in the Top 10 States (2019-2022)
+
+The Plotly line chart widget illustrates food insecurity trends for the top 10 most food-insecure states from 2019 to 2022. This interactive chart includes tooltips with specific values for each year and filters to select states. Users can observe how food insecurity rates have changed over time, from 2019 to 2022, for the most food-insecure states, with the potential to identify trends and improvements. The dashboard allows individuals to compare trends across states, providing insights into whether changes in food insecurity are consistent across different regions.
+
+```{r plotly, include=FALSE}
+
+# Load necessary libraries 
+library(plotly) 
+library(dplyr) 
+
+top_states <- fooddata_states %>%
+  filter(Year == 2022) %>% 
+  arrange(desc(Overall.Food.Insecurity.Rate)) %>% 
+  head(10) %>% 
+  pull(State) 
+ 
+filtered_data <- fooddata_states %>% 
+  filter(State %in% top_states) %>%
+  mutate(Overall.Food.Insecurity.Rate = Overall.Food.Insecurity.Rate * 100)
+
+ 
+# esquisser(data=filtered_data)
+
+library(ggplot2)
+
+
+# Create the Plotly line chart 
+
+state_plot <- ggplot(filtered_data) +
+  aes(
+    x = Year,
+    y = Overall.Food.Insecurity.Rate,
+    colour = State,
+    group = State.Name,
+    text = paste(
+      "Year:", Year,
+      "<br>State Food Insecurity Rate:", Overall.Food.Insecurity.Rate,
+      "<br>State:", State.Name
+    ) # Customizing tooltip labels
+  ) +
+  geom_line(linewidth = 0.95) +
+  scale_color_brewer(palette = "Paired", direction = 1) +
+  labs(
+    x = "Year (2019-2022)",
+    y = "Food Insecurity Rate (%)",
+    title = "Food Insecurity Rate (2019-2022) in Top 10 Most Impacted States"
+  ) +
+  theme_gray()
+
+
+
+```
+```{r, echo=F}
+ggplotly(state_plot, tooltip = "text") 
+```
+Column {data-height=1000}
+---
+
+# Food Security Rates in Different Georgia Counties (2022)
+
+The Leaflet map widget displays food insecurity rates for the state of Georgia in 2022, providing insights into the number of food-insecure individuals, child food insecurity rates, the number of food-insecure children, and the cost per meal for each county. Each county is clickable, revealing detailed statistics for that region. Users can identify which counties in Georgia have the highest and lowest food insecurity rates, including child food insecurity, allowing for comparisons across the state and specific regions. Additionally, users can explore how the cost of meals varies by county and how this cost might influence food insecurity.
+
+```{r leaflet, include=FALSE}
+
+# Load necessary libraries 
+#install.packages("tigris")
+#install.packages("leaflet")
+#install.packages("dplyr")
+#install.packages("sf")
+
+library(tigris) 
+library(leaflet) 
+library(dplyr) 
+library(sf) 
+ 
+ 
+# Filter data for Georgia 
+georgia_data <- fooddata_counties %>% filter(State == "GA")  %>%
+  filter(Year == 2022) %>%
+  mutate(Overall.Food.Insecurity.Rate = Overall.Food.Insecurity.Rate * 100) %>%
+  mutate(Child.Food.Insecurity.Rate = Child.Food.Insecurity.Rate *100) %>%
+  mutate(FIPS = as.character(FIPS))
+
+options(tigris_use_cache = TRUE)  # Caches the data to avoid repeated downloads
+options(tigris_progress = FALSE)  # Disable the progress bar
+
+options(progress = FALSE) 
+# Get county boundaries for Georgia using tigris 
+suppressMessages(georgia_counties <- counties(state = "GA", cb = TRUE, year = 2022))
+
+options(progress = FALSE)
+
+#MERGE DATASET WITH THE BOUNDARIES DATA
+merged_data <- geo_join(georgia_counties, georgia_data, by_sp = "GEOID", by_df = "FIPS")
+ 
+# Create a color palette for food insecurity rates 
+pal <- colorNumeric("PuBuGn", domain = merged_data$Overall.Food.Insecurity.Rate) 
+ 
+# Create the Leaflet map 
+ga_state_map <- leaflet(merged_data) %>% 
+  addTiles() %>% 
+  addPolygons( 
+    fillColor = ~pal(Overall.Food.Insecurity.Rate), 
+    weight = 1, 
+    opacity = 1, 
+    color = "white", 
+    fillOpacity = 0.7, 
+    label = ~paste0(NAME, ": ", Overall.Food.Insecurity.Rate, "%"), 
+    popup = ~paste0( 
+      "<b>", NAME, "</b><br>", 
+      "Food Insecurity Rate: ", Overall.Food.Insecurity.Rate, "%<br>", 
+      "Food Insecure Individuals: ", `#.of.Food.Insecure.Persons.Overall`, "<br>", 
+      "Child Food Insecurity Rate: ", Child.Food.Insecurity.Rate, "%<br>", 
+      "Food Insecure Children: ", `#.of.Food.Insecure.Children`, "<br>", 
+      "Cost Per Meal: $", Cost.Per.Meal 
+    ) 
+  ) %>% 
+  addLegend( 
+    pal = pal, 
+    values = ~Overall.Food.Insecurity.Rate, 
+    title = "Food Insecurity Rate (%) in Georgia Counties - 2022" 
+  ) 
+
+
+
+```
+
+```{r, echo=F}
+ga_state_map
+```
+#Column {data-height=2000, data-width=1000}
+---
