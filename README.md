@@ -12,6 +12,8 @@ This interactive **Food Insecurity Dashboard** visualizes key trends in food ins
 
 Users interacting with this dashboard will better understand how food insecurity varies throughout, and will garner better understanding of geographic disparities. By visualizing trends over time and identifying high-need areas, stakeholders and researchers can make data-driven decisions to allocate resources effectively and implement targeted interventions.
 
+To access the dashboard, navigate to this link here: https://cxthyngxy.github.io/feedingamerica/data55_finalproj.html#feeding-america-data-555-final-project 
+
 ## Data Source  
 The data comes from **Feeding America’s Map the Meal Gap dataset** ([available here](https://www.feedingamerica.org/research/map-the-meal-gap/by-county/)). It includes:  
   - **County-level food insecurity rates** across the U.S.  
